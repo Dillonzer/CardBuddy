@@ -1,0 +1,4 @@
+aiohttp
+requests
+psycopg2-binary
+discord-py-interactions==5.6.0

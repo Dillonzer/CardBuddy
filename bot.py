@@ -16,7 +16,7 @@ guild_ids = [642081591371497472]
 cardBuddy = CardBuddy()
 tcgPlayer = TCGPlayer()
 
-client = interactions.Client(token=Consts.TOKEN)
+client = interactions.AutoShardedClient(token=Consts.TOKEN)
 
 interactions.const.CLIENT_FEATURE_FLAGS["FOLLOWUP_INTERACTIONS_FOR_IMAGES"] = True
 

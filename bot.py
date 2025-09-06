@@ -795,7 +795,7 @@ async def autocomplete_setchecklist(ctx):
                     )])])
 async def GetDeckFromPokemonCardio(ctx, card, format):
     decks = PokemonCardIO.GetDeck(card, format)
-    if(len(decks) <= 0 or decks == None):
+    if(decks == None or len(decks) <= 0):
         ctx.send("Could not find any decks!")
     else:
         e = interactions.Embed()
@@ -851,7 +851,7 @@ async def autocomplete_pokemoncardio(ctx):
                     )])])
 async def GetRandomDeckFromPokemonCardio(ctx, format):
     decks = PokemonCardIO.GetRandomDeck(format)
-    if(len(decks) <= 0 or decks == None):
+    if(decks == None or len(decks) <= 0):
         ctx.send("Could not find any decks!")
     else:
         e = interactions.Embed()

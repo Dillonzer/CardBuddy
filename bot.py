@@ -9,12 +9,14 @@ from tcgPlayer import TCGPlayer
 from cardbuddy import CardBuddy
 from energyType import EnergyType
 from pokemoncardio import PokemonCardIO
+from tcgdex import PokemonPocket
 import interactions
 
 guild_ids = [642081591371497472]
 
 cardBuddy = CardBuddy()
 tcgPlayer = TCGPlayer()
+pocket = PokemonPocket()
 
 client = interactions.AutoShardedClient(token=Consts.TOKEN)
 
@@ -50,6 +52,15 @@ async def BuildEmbed(ctx, val, tcgPlayerPrices, thumbnail):
         #if(val['craftingCost'] is not None):
             #e.add_field(name="PTCGL Crafting Cost", value = f"{val['craftingCost']} <:CraftingCurrency:946039553708400660>")
     return e
+
+async def BuildPocketEmbed(ctx, val, cardSet):
+    e = interactions.Embed()
+    e.title= HelperFunctions.GetEmoji(val['name']) + " (" + HelperFunctions.GetEmojiForNumber(str(val['localId']).upper()) + ")"
+    e.set_image(url=val['image']+'/high.png')
+    e.color = interactions.BrandColors.GREEN
+    e.set_footer(text= cardSet['name'],icon_url=cardSet['logo']+'.png')
+    return e
+
 
 def GetAllCardsForLocale(locale):
     return cardBuddy.cardDict[Consts.EN_US]
@@ -1028,6 +1039,219 @@ async def autocomplete_cardtextset(ctx):
         await ctx.send(choices)
     except:
         pass
+
+@interactions.slash_command(name='pocket_set',
+        description="Shows specific set",
+        options=[
+            interactions.SlashCommandOption(
+                name="name",
+                description="Name of the set.",
+                type=interactions.OptionType.STRING,
+                required=True,
+                autocomplete=True
+            )
+        ])
+async def GetSpecificPocketSet(ctx, name):
+    await ctx.defer()
+    e = interactions.Embed()
+    e.color = interactions.BrandColors.GREEN
+    autoFillSuggest = False
+    name = HelperFunctions.ReplaceCharacters(name)
+        
+    message = ""
+    suggestions = "Could not find `" + name + "`.\n"
+
+    suggestionArray = []
+    foundSet = False
+    for val in pocket.sets:
+        if val['name'].lower() == name.lower():
+            e.title = val['name']    
+            message = "Total Cards " + str(val['cardCount']['total'])
+            e.set_image(url=val['logo']+".png")
+            foundSet = True
+        else:
+            if (name.lower() in val['name'].lower() and len(name) > 3):
+                if (val['name'] not in suggestionArray):
+                    if(autoFillSuggest is False):
+                        suggestions += "Attempted Suggestions:\n"
+                        autoFillSuggest = True
+                    suggestionArray.append(val['name'])
+                    suggestions += "`" + val['name'] + "`\n"   
+            
+    if not foundSet:
+        message = suggestions
+        e.title= "Whoa! I can't find that set!"
+        e.color = interactions.BrandColors.RED
+        e.set_thumbnail(url = Consts.SAD_FACE)
+    
+    e.description = message
+
+    await ctx.send(embeds = e)
+
+@GetSpecificPocketSet.autocomplete("name")
+async def autocomplete_set(ctx):
+    try:
+        choices = [
+        interactions.SlashCommandChoice(name=item, value=item) for item in pocket.autocompleteNamesSets if ctx.kwargs['name'].lower() in item.lower()
+    ] 
+
+        if(len(choices) > 25):
+            choices = choices[0:25]
+
+        await ctx.send(choices)
+    except:
+        pass
+
+@interactions.slash_command(name='pocket_card',
+        description="Shows the specific card",
+        options=[
+            interactions.SlashCommandOption(
+                name="name",
+                description="Name of the card",
+                type=interactions.OptionType.STRING,
+                required=True,
+                autocomplete=True
+            ),     
+            interactions.SlashCommandOption(
+                name="set",
+                description="Name of the set",
+                type=interactions.OptionType.STRING,
+                required=False,
+                autocomplete=True
+            )]
+        )
+async def GetSpecificPocketCard(ctx, name, set = ""):
+    await ctx.defer()
+    user = ctx.author
+    userId = ctx.author.id
+    count = 0
+    ALLCARDS = pocket.cards    
+    name = HelperFunctions.ReplaceCharacters(name)
+    if(set and format == ""):
+        suggestions = f"Could not find `{set} {name}`\n"
+    elif(set and format):
+        suggestions = f"Could not find `{set} {name} in {format}`\n"
+    elif(format):
+        suggestions = f"Could not find `{name} in {format}`\n"
+    else:        
+        suggestions = f"Could not find `{name}`\n"
+    embeddedArray = []
+    suggestionArray = []
+    foundCard = False 
+
+    async def ButtonClick(button_ctx: interactions.Button):
+        try:
+            nonlocal count
+            if button_ctx.ctx.custom_id == f"prev{ctx.id}" and button_ctx.ctx.author == user:
+                if count - 1 >= 0:                        
+                    count = count - 1
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])
+                else:
+                    count = maxEmbed - 1
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])
+            elif button_ctx.ctx.custom_id == f"next{ctx.id}" and button_ctx.ctx.author == user:
+                if count + 1 < maxEmbed:
+                    count = count + 1
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])
+                else:
+                    count = 0
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])                        
+            else:
+                try:                                                    
+                    await button_ctx.ctx.author.send(Consts.ONLY_REQUESTOR_CAN_TOGGLE)
+                except:
+                    pass
+        except:
+            pass
+
+    for val in ALLCARDS:
+        cardSet = pocket.GetSetFromCard(val)
+        if set:
+            if (name.lower() in val['name'].lower() and len(name) > 3 \
+            or val['name'].lower() == name.lower()) \
+            and cardSet['name'].lower() == set.lower():
+                e = await BuildPocketEmbed(ctx,val,cardSet)
+                embeddedArray.append(e)
+                foundCard = True
+        else:
+            if (name.lower() in val['name'].lower() and len(name) > 3) \
+            or val['name'].lower() == name.lower():
+                e = await BuildPocketEmbed(ctx,val,cardSet)
+                embeddedArray.append(e)
+                foundCard = True
+
+    if not foundCard:
+        e = interactions.Embed()
+        e.title= "Whoa! I can't find that card!"
+        e.description = suggestions
+        e.color = interactions.BrandColors.RED
+        e.set_thumbnail(url = Consts.SAD_FACE)
+        embeddedArray.append(e)   
+
+    maxEmbed = len(embeddedArray)
+
+    if maxEmbed > 1:  
+        descCount = 0
+        for es in embeddedArray:
+            descCount = descCount + 1
+            es.description = "Showing " + str(descCount) + "/" + str(maxEmbed) + ". Traverse the cards with the buttons below."
+
+
+        buttons = [
+            interactions.Button(
+                style=interactions.ButtonStyle.RED,
+                label="Previous",
+                custom_id=f"prev{ctx.id}"
+            ),
+            interactions.Button(
+                style=interactions.ButtonStyle.GREEN,
+                label="Next",
+                custom_id=f"next{ctx.id}"
+            )
+        ]
+        action_row = interactions.ActionRow(*buttons)
+        msg = await ctx.send(embeds = embeddedArray[0], components=[action_row])
+          
+        try:       
+            button_ctx: interactions.ComponentContext = await client.wait_for_component(components=action_row, check=ButtonClick, timeout=60)  
+        except asyncio.TimeoutError:
+            action_row.components[0].disabled = True
+            action_row.components[1].disabled = True
+            await msg.edit(components=action_row)
+            pass
+            # When it times out, edit the original message and remove the button(s)
+            # return await ctx.edit(embeds = embeddedArray[count], components=[]) 
+    else:        
+        msg = await ctx.send(embeds = embeddedArray[0]) 
+
+@GetSpecificPocketCard.autocomplete("name")
+async def autocomplete_cardname(ctx):
+    try:
+        choices = [
+        interactions.SlashCommandChoice(name=item, value=item) for item in pocket.autocompleteNamesCards if ctx.kwargs['name'].lower() in item.lower()
+    ] 
+
+        if(len(choices) > 25):
+            choices = choices[0:25]
+
+        await ctx.send(choices)
+    except:
+        pass
+
+@GetSpecificPocketCard.autocomplete("set")
+async def autocomplete_cardset(ctx):
+    try:
+        choices = [
+        interactions.SlashCommandChoice(name=item, value=item) for item in pocket.autocompleteNamesSets if ctx.kwargs['set'].lower() in item.lower()
+    ] 
+
+        if(len(choices) > 25):
+            choices = choices[0:25]
+
+        await ctx.send(choices)
+    except:
+        pass
+
 
 @interactions.Task.create(interactions.IntervalTrigger(minutes=10))
 async def ListServers():

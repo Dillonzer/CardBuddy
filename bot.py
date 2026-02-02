@@ -56,11 +56,13 @@ async def BuildEmbed(ctx, val, tcgPlayerPrices, thumbnail):
 async def BuildPocketEmbed(ctx, val, cardSet):
     e = interactions.Embed()
     e.title= HelperFunctions.GetEmoji(val['name']) + " (" + HelperFunctions.GetEmojiForNumber(str(val['localId']).upper()) + ")"
+    e.set_author(name=cardSet['name'])
+    if('logo' in cardSet):
+        e.set_thumbnail(url=cardSet['logo']+'.png')
     e.set_image(url=val['image']+'/high.png')
     e.color = interactions.BrandColors.GREEN
-    e.set_footer(text= cardSet['name'],icon_url=cardSet['logo']+'.png')
+    e.set_footer(text="Powered by TCGDex",icon_url=Consts.TCGDEX_LOGO)
     return e
-
 
 def GetAllCardsForLocale(locale):
     return cardBuddy.cardDict[Consts.EN_US]
@@ -86,6 +88,9 @@ async def PrintCommands(ctx):
     commands += "• `/set_checklist`: DMs you a Checklist for the set you asked for\n"
     commands += "• `/set_list`: Displays all card in that set! (TCGPlayer Integration disabled for this command)\n"
 
+    pocketCommands ="• `/pocket_card`: Displays a picture of the card in that set or all cards with that name!\n"
+    pocketCommands += "• `/pocket_set`: Prints out information about the set you are asking about!\n"
+
     adminCommands = "• `/tcgplayer_toggle`: Toggles the TCGPlayer Integration!\n"
     adminCommands += "• `/ptcgl_crafting_toggle`: Toggles the PTCGL Crafting Price Functionality!\n"
 
@@ -93,6 +98,7 @@ async def PrintCommands(ctx):
     pokemonCardsioCommands += "• `/get_random_deck`: Get a random deck from PokemonCards.io!\n"
     
     e.add_field(name="Commands", value=commands, inline=False)
+    e.add_field(name="Pokemon TCG Pocket Commands", value=pocketCommands, inline=False)
     e.add_field(name="PokemonCards.io Commands", value=pokemonCardsioCommands, inline=False)
     e.add_field(name="Admin Commands", value=adminCommands, inline=False)
     e.set_footer(text="Created by Dillonzer")
@@ -1056,7 +1062,6 @@ async def GetSpecificPocketSet(ctx, name):
     e = interactions.Embed()
     e.color = interactions.BrandColors.GREEN
     autoFillSuggest = False
-    name = HelperFunctions.ReplaceCharacters(name)
         
     message = ""
     suggestions = "Could not find `" + name + "`.\n"
@@ -1067,7 +1072,9 @@ async def GetSpecificPocketSet(ctx, name):
         if val['name'].lower() == name.lower():
             e.title = val['name']    
             message = "Total Cards " + str(val['cardCount']['total'])
-            e.set_image(url=val['logo']+".png")
+            if('logo' in val):
+                e.set_image(url=val['logo']+".png")
+            e.set_footer(text="Powered by TCGDex",icon_url=Consts.TCGDEX_LOGO)
             foundSet = True
         else:
             if (name.lower() in val['name'].lower() and len(name) > 3):
@@ -1126,13 +1133,8 @@ async def GetSpecificPocketCard(ctx, name, set = ""):
     userId = ctx.author.id
     count = 0
     ALLCARDS = pocket.cards    
-    name = HelperFunctions.ReplaceCharacters(name)
-    if(set and format == ""):
+    if(set):
         suggestions = f"Could not find `{set} {name}`\n"
-    elif(set and format):
-        suggestions = f"Could not find `{set} {name} in {format}`\n"
-    elif(format):
-        suggestions = f"Could not find `{name} in {format}`\n"
     else:        
         suggestions = f"Could not find `{name}`\n"
     embeddedArray = []
@@ -1251,7 +1253,6 @@ async def autocomplete_cardset(ctx):
         await ctx.send(choices)
     except:
         pass
-
 
 @interactions.Task.create(interactions.IntervalTrigger(minutes=10))
 async def ListServers():

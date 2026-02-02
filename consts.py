@@ -28,3 +28,5 @@ class Consts:
     PLAYLIMITLESSTCG_URL = "https://play.limitlesstcg.com/tournament"
     COULD_NOT_FIND_TOURNAMENT = "Error pulling tournaments"
     PLAYLIMITLESSTCG_LOGO = "https://play.limitlesstcg.com/limitless.png"
+    TCGDEX_LOGO = "https://pkmn-tcg-api-images.sfo2.cdn.digitaloceanspaces.com/!Logos/tcgdex_logo.png"
+    ENV = "prod"

@@ -20,5 +20,6 @@ class CardBuddy():
 
         self.setDict = Sets(self.uri)
 
-        self.database = PostgresDB()
+        if(Consts.ENV != 'development'):
+            self.database = PostgresDB()
     

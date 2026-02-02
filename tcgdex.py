@@ -132,7 +132,6 @@ class PokemonPocket:
     def GetSetFromCard(self, card):
         replaceValue = "-"+card["localId"]
         setId = card["id"].replace(replaceValue,"")
-        print(setId)
         for s in self.sets:
             if s["id"] == setId:
                 return s

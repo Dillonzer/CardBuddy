@@ -15,6 +15,9 @@ Also if you want to support me follow me on [Patreon](https://www.patreon.com/be
 - `/set`: Prints out information about the set you are asking about!
 - `/set_checklist`: DMs you a Checklist for the set you asked for
 - `/set_list`: Displays all card in that set! (TCGPlayer Integration disabled for this command)
+## Pokemon TCG Pocket Commands
+- `/pocket_card`: Displays a picture of the card in that set or all cards with that name!
+- `/pocket_set`: Prints out information about the set you are asking about!
 ## PokemonCards.io Commands
 - `/get_deck`: Get deck information from PokemonCards.io!
 - `/get_random_deck`: Get a random deck from PokemonCards.io!

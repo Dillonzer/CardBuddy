@@ -983,17 +983,17 @@ async def GetSpecificCardText(ctx, text, set = "", format = ""):
             if button_ctx.ctx.custom_id == f"prev{ctx.id}" and button_ctx.ctx.author == user:
                 if count - 1 >= 0:                        
                     count = count - 1
-                    await button_ctx.ctx.edit(embeds = embeddedArray[count])
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])   
                 else:
                     count = maxEmbed - 1
-                    await button_ctx.ctx.edit(embeds = embeddedArray[count])
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])   
             elif button_ctx.ctx.custom_id == f"next{ctx.id}" and button_ctx.ctx.author == user:
                 if count + 1 < maxEmbed:
                     count = count + 1
-                    await button_ctx.ctx.edit(embeds = embeddedArray[count])
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])   
                 else:
                     count = 0
-                    await button_ctx.ctx.edit(embeds = embeddedArray[count])                        
+                    await button_ctx.ctx.edit_origin(embeds = embeddedArray[count])                        
             else:
                 try:                                                    
                     await button_ctx.ctx.author.send(Consts.ONLY_REQUESTOR_CAN_TOGGLE)
@@ -1011,12 +1011,12 @@ async def GetSpecificCardText(ctx, text, set = "", format = ""):
 
         buttons = [
             interactions.Button(
-                style=interactions.ButtonStyle.PRIMARY,
+                style=interactions.ButtonStyle.RED,
                 label="Previous",
                 custom_id=f"prev{ctx.id}"
             ),
             interactions.Button(
-                style=interactions.ButtonStyle.PRIMARY,
+                style=interactions.ButtonStyle.GREEN,
                 label="Next",
                 custom_id=f"next{ctx.id}"
             )
